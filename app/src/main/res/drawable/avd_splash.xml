@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_splash">
+    <target
+        android:name="trails"
+        android:animation="@animator/splash_trails_rotate" />
+    <target
+        android:name="arc1"
+        android:animation="@animator/splash_arc1" />
+    <target
+        android:name="arc2"
+        android:animation="@animator/splash_arc2" />
+    <target
+        android:name="arc3"
+        android:animation="@animator/splash_arc3" />
+    <target
+        android:name="arc4"
+        android:animation="@animator/splash_arc4" />
+    <target
+        android:name="star"
+        android:animation="@animator/splash_star" />
+    <target
+        android:name="starHalo"
+        android:animation="@animator/splash_star_fade" />
+    <target
+        android:name="starBody"
+        android:animation="@animator/splash_star_fade" />
+    <target
+        android:name="starCore"
+        android:animation="@animator/splash_star_fade" />
+</animated-vector>

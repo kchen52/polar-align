@@ -75,6 +75,7 @@ object PolarAlignment {
     latitudeDegrees: Double,
     declinationDegrees: Double,
     compassTrustworthy: Boolean,
+    celebrationIndex: Int = 0,
   ): Guidance {
     val trueAzimuth = wrapTo180(magneticAzimuthDegrees + declinationDegrees)
     val azimuthError = wrapTo180(trueAzimuth)
@@ -87,9 +88,9 @@ object PolarAlignment {
         !screenFacesUp -> "Turn the phone so the screen faces the sky."
         !level && sidewaysTiltDegrees > 0 -> "The phone is twisted, right side high. Rotate it so the left and right edges are level."
         !level -> "The phone is twisted, left side high. Rotate it so the left and right edges are level."
-        aligned -> "Aligned"
+        aligned -> celebrationMessage(celebrationIndex)
         !compassTrustworthy -> "Calibrate the compass before treating this as aligned."
-        else -> "Get both axes within 1°."
+        else -> warmthMessage(hypot(azimuthError, altitudeError))
       }
     return Guidance(
       azimuthErrorDegrees = azimuthError,
@@ -110,6 +111,24 @@ object PolarAlignment {
       CompassAccuracy.Unreliable ->
         "Compass needs a calibration. Wave the phone in a figure-8 away from the metal mount, then set it back down."
       CompassAccuracy.Unknown -> "Waiting for the compass."
+    }
+
+  val CELEBRATIONS =
+    listOf(
+      "Locked on. Polaris approves.",
+      "Aligned! Clear skies.",
+      "Right on the pole. Go take some photos.",
+    )
+
+  /** Steady for a given [index]. The view model advances the index once per lock-on. */
+  fun celebrationMessage(index: Int): String = CELEBRATIONS[index.mod(CELEBRATIONS.size)]
+
+  /** >5° cold, 2°–5° warmer, inside 2° hot. */
+  fun warmthMessage(totalErrorDegrees: Double): String =
+    when {
+      totalErrorDegrees > 5.0 -> "Cold. Let's go find the pole."
+      totalErrorDegrees >= 2.0 -> "Warmer…"
+      else -> "Hot! Almost there."
     }
 
   fun formatLatitude(latitude: Double): String {

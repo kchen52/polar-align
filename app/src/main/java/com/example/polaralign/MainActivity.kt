@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.polaralign.theme.PolarAlignTheme
@@ -19,6 +20,7 @@ import com.example.polaralign.ui.main.AlignViewModel
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    installSplashScreen()
     super.onCreate(savedInstanceState)
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     enableEdgeToEdge()

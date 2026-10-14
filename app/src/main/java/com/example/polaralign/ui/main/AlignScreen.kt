@@ -10,14 +10,12 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -36,11 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,8 +46,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.polaralign.theme.PolarAlignTheme
-
-private const val CHART_HALF_RANGE_DEGREES = 8.0
 
 @Composable
 fun AlignRoute(modifier: Modifier = Modifier, viewModel: AlignViewModel = viewModel()) {
@@ -98,6 +90,7 @@ fun AlignRoute(modifier: Modifier = Modifier, viewModel: AlignViewModel = viewMo
     state = state,
     modifier = modifier,
     onNightMode = viewModel::setNightMode,
+    onSound = viewModel::setSoundEnabled,
     onSubmitLatitude = viewModel::setManualLatitude,
     onUseGps = {
       val granted =
@@ -127,6 +120,7 @@ fun AlignRoute(modifier: Modifier = Modifier, viewModel: AlignViewModel = viewMo
 fun AlignScreen(
   state: AlignUiState,
   onNightMode: (Boolean) -> Unit,
+  onSound: (Boolean) -> Unit,
   onSubmitLatitude: (Double) -> Unit,
   onUseGps: () -> Unit,
   onRequestPermission: () -> Unit,
@@ -147,7 +141,16 @@ fun AlignScreen(
           color = MaterialTheme.colorScheme.onBackground,
           modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = { onNightMode(!state.nightMode) }) {
+        TextButton(
+          onClick = { onSound(!state.soundEnabled) },
+          contentPadding = PaddingValues(horizontal = 8.dp),
+        ) {
+          Text(if (state.soundEnabled) "Sound off" else "Sound on")
+        }
+        TextButton(
+          onClick = { onNightMode(!state.nightMode) },
+          contentPadding = PaddingValues(horizontal = 8.dp),
+        ) {
           Text(if (state.nightMode) "Day view" else "Night view")
         }
       }
@@ -249,44 +252,6 @@ private fun CorrectionText(message: String?) {
 }
 
 @Composable
-private fun PointingChart(azimuthError: Double, altitudeError: Double, aligned: Boolean) {
-  val primary = MaterialTheme.colorScheme.primary
-  val outline = MaterialTheme.colorScheme.outline
-  val onBackground = MaterialTheme.colorScheme.onBackground
-  Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-      Text("▲  this edge aims at the pole", color = onBackground, style = MaterialTheme.typography.labelLarge)
-      Box(Modifier.fillMaxWidth().padding(top = 8.dp).aspectRatio(1f)) {
-        Text("high", color = onBackground, style = MaterialTheme.typography.labelLarge, modifier = Modifier.align(Alignment.TopCenter))
-        Text("low", color = onBackground, style = MaterialTheme.typography.labelLarge, modifier = Modifier.align(Alignment.BottomCenter))
-        Text("W", color = onBackground, style = MaterialTheme.typography.labelLarge, modifier = Modifier.align(Alignment.CenterStart))
-        Text("E", color = onBackground, style = MaterialTheme.typography.labelLarge, modifier = Modifier.align(Alignment.CenterEnd))
-        Canvas(
-          Modifier.fillMaxSize().padding(28.dp).semantics {
-            contentDescription = "Pointing error. Right means too far east. Up means too high."
-          }
-        ) {
-          val radius = size.minDimension / 2f
-          val center = Offset(size.width / 2f, size.height / 2f)
-          drawCircle(color = outline, radius = radius, center = center, style = Stroke(width = 2.dp.toPx()))
-          val alignedRadius = (radius * (1.0 / CHART_HALF_RANGE_DEGREES)).toFloat()
-          drawCircle(color = outline, radius = alignedRadius, center = center, style = Stroke(width = 2.dp.toPx()))
-          drawLine(outline, Offset(center.x - radius, center.y), Offset(center.x + radius, center.y), strokeWidth = 2.dp.toPx())
-          drawLine(outline, Offset(center.x, center.y - radius), Offset(center.x, center.y + radius), strokeWidth = 2.dp.toPx())
-          val dx = (azimuthError / CHART_HALF_RANGE_DEGREES).coerceIn(-1.0, 1.0) * radius
-          val dy = -(altitudeError / CHART_HALF_RANGE_DEGREES).coerceIn(-1.0, 1.0) * radius
-          drawCircle(
-            color = primary,
-            radius = if (aligned) 14.dp.toPx() else 10.dp.toPx(),
-            center = Offset(center.x + dx.toFloat(), center.y + dy.toFloat()),
-          )
-        }
-      }
-    }
-  }
-}
-
-@Composable
 private fun LatitudeRow(
   state: AlignUiState,
   onChange: () -> Unit,
@@ -369,6 +334,7 @@ private fun AlignScreenNightPreview() {
     AlignScreen(
       state = previewState(),
       onNightMode = {},
+      onSound = {},
       onSubmitLatitude = {},
       onUseGps = {},
       onRequestPermission = {},
@@ -382,8 +348,16 @@ private fun AlignScreenNightPreview() {
 private fun AlignScreenDayPreview() {
   PolarAlignTheme(nightMode = false) {
     AlignScreen(
-      state = previewState().copy(nightMode = false, aligned = true, azimuthError = 0.2, altitudeError = -0.4),
+      state =
+        previewState().copy(
+          nightMode = false,
+          aligned = true,
+          azimuthError = 0.2,
+          altitudeError = -0.4,
+          statusMessage = "Locked on. Polaris approves.",
+        ),
       onNightMode = {},
+      onSound = {},
       onSubmitLatitude = {},
       onUseGps = {},
       onRequestPermission = {},
@@ -405,6 +379,6 @@ private fun previewState() =
     altitudeError = -1.2,
     azimuthMessage = "Too far east by 2.4°. Turn the mount west.",
     altitudeMessage = "Too low by 1.2°. Raise the altitude.",
-              statusMessage = "Get both axes within 1°.",
+    statusMessage = "Warmer…",
     compassMessage = "Compass is usable. A figure-8 away from the mount can steady it.",
   )

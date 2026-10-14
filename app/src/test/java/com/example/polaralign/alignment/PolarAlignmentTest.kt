@@ -1,6 +1,8 @@
 package com.example.polaralign.alignment
 
+import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,7 +28,7 @@ class PolarAlignmentTest {
     assertEquals(0.0, aim.altitudeDegrees, 0.05)
     assertTrue(aim.screenFacesUp)
     assertTrue(guidance.aligned)
-    assertEquals("Aligned", guidance.statusMessage)
+    assertEquals("Locked on. Polaris approves.", guidance.statusMessage)
   }
 
   @Test
@@ -54,6 +56,7 @@ class PolarAlignmentTest {
     assertEquals(3.0, guidance.altitudeErrorDegrees, 0.1)
     assertEquals("Too far east by 90.0°. Turn the mount west.", guidance.azimuthMessage)
     assertEquals("Too high by 3.0°. Lower the altitude.", guidance.altitudeMessage)
+    assertEquals("Cold. Let's go find the pole.", guidance.statusMessage)
     assertFalse(guidance.aligned)
   }
 
@@ -82,6 +85,49 @@ class PolarAlignmentTest {
 
     assertEquals(-10.0, guidance.azimuthErrorDegrees, 0.1)
     assertEquals("Too far west by 10.0°. Turn the mount east.", guidance.azimuthMessage)
+  }
+
+  @Test
+  fun warmthBandsFollowTotalError() {
+    assertEquals("Cold. Let's go find the pole.", PolarAlignment.warmthMessage(5.01))
+    assertEquals("Cold. Let's go find the pole.", PolarAlignment.warmthMessage(12.0))
+    assertEquals("Warmer…", PolarAlignment.warmthMessage(5.0))
+    assertEquals("Warmer…", PolarAlignment.warmthMessage(2.0))
+    assertEquals("Hot! Almost there.", PolarAlignment.warmthMessage(1.99))
+    assertEquals("Hot! Almost there.", PolarAlignment.warmthMessage(1.1))
+
+    val diagonal =
+      guidanceFor(
+        PolarAlignment.screenAim(aimMatrix(azimuthDegrees = 4.0, altitudeDegrees = 44.0)),
+        latitude = 40.0,
+        declination = 0.0,
+      )
+    val total = hypot(diagonal.azimuthErrorDegrees, diagonal.altitudeErrorDegrees)
+    assertTrue(total > 5.0)
+    assertTrue(abs(diagonal.azimuthErrorDegrees) < 5.0)
+    assertTrue(abs(diagonal.altitudeErrorDegrees) < 5.0)
+    assertEquals("Cold. Let's go find the pole.", diagonal.statusMessage)
+    assertEquals("Too far east by 4.0°. Turn the mount west.", diagonal.azimuthMessage)
+    assertEquals("Too high by 4.0°. Lower the altitude.", diagonal.altitudeMessage)
+  }
+
+  @Test
+  fun celebrationStaysOnTheRequestedIndex() {
+    assertEquals("Locked on. Polaris approves.", PolarAlignment.celebrationMessage(0))
+    assertEquals("Aligned! Clear skies.", PolarAlignment.celebrationMessage(1))
+    assertEquals("Right on the pole. Go take some photos.", PolarAlignment.celebrationMessage(2))
+    assertEquals(PolarAlignment.celebrationMessage(0), PolarAlignment.celebrationMessage(3))
+
+    val aim = PolarAlignment.screenAim(identityMatrix())
+    val first = guidanceFor(aim, latitude = 0.0, declination = 0.0, celebrationIndex = 1)
+    val again = guidanceFor(aim, latitude = 0.0, declination = 0.0, celebrationIndex = 1)
+    assertTrue(first.aligned)
+    assertEquals("Aligned! Clear skies.", first.statusMessage)
+    assertEquals(first.statusMessage, again.statusMessage)
+    assertEquals(
+      "Right on the pole. Go take some photos.",
+      guidanceFor(aim, latitude = 0.0, declination = 0.0, celebrationIndex = 2).statusMessage,
+    )
   }
 
   @Test
@@ -134,6 +180,7 @@ class PolarAlignmentTest {
     latitude: Double,
     declination: Double,
     trustworthy: Boolean = true,
+    celebrationIndex: Int = 0,
   ) =
     PolarAlignment.guidance(
       magneticAzimuthDegrees = aim.magneticAzimuthDegrees,
@@ -143,6 +190,7 @@ class PolarAlignmentTest {
       latitudeDegrees = latitude,
       declinationDegrees = declination,
       compassTrustworthy = trustworthy,
+      celebrationIndex = celebrationIndex,
     )
 
   private fun identityMatrix(): FloatArray = aimMatrix(azimuthDegrees = 0.0, altitudeDegrees = 0.0)

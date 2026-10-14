@@ -30,6 +30,7 @@ class AlignScreenTest {
               statusMessage = "Get both axes within 1°.",
             ),
           onNightMode = {},
+          onSound = {},
           onSubmitLatitude = {},
           onUseGps = {},
           onRequestPermission = {},

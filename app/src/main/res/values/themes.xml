@@ -5,4 +5,18 @@
         <item name="android:statusBarColor">#120404</item>
         <item name="android:navigationBarColor">#120404</item>
     </style>
+
+    <style name="Theme.PolarAlign.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#120404</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.PolarAlign</item>
+        <item name="android:windowBackground">#120404</item>
+        <item name="android:statusBarColor">#120404</item>
+        <item name="android:navigationBarColor">#120404</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+    </style>
 </resources>
