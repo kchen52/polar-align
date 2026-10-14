@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -331,38 +332,45 @@ private tailrec fun Context.findActivity(): Activity? =
 @Composable
 private fun AlignScreenNightPreview() {
   PolarAlignTheme(nightMode = true) {
-    AlignScreen(
-      state = previewState(),
-      onNightMode = {},
-      onSound = {},
-      onSubmitLatitude = {},
-      onUseGps = {},
-      onRequestPermission = {},
-      onOpenLocationSettings = {},
-    )
+    Surface(color = MaterialTheme.colorScheme.background) {
+      AlignScreen(
+        state = previewState(),
+        onNightMode = {},
+        onSound = {},
+        onSubmitLatitude = {},
+        onUseGps = {},
+        onRequestPermission = {},
+        onOpenLocationSettings = {},
+      )
+    }
   }
 }
 
-@Preview(showBackground = true, widthDp = 840, heightDp = 900)
+@Preview(showBackground = true, widthDp = 360, heightDp = 800)
 @Composable
 private fun AlignScreenDayPreview() {
   PolarAlignTheme(nightMode = false) {
-    AlignScreen(
-      state =
-        previewState().copy(
-          nightMode = false,
-          aligned = true,
-          azimuthError = 0.2,
-          altitudeError = -0.4,
-          statusMessage = "Locked on. Polaris approves.",
-        ),
-      onNightMode = {},
-      onSound = {},
-      onSubmitLatitude = {},
-      onUseGps = {},
-      onRequestPermission = {},
-      onOpenLocationSettings = {},
-    )
+    Surface(color = MaterialTheme.colorScheme.background) {
+      AlignScreen(
+        state =
+          previewState().copy(
+            nightMode = false,
+            aligned = true,
+            azimuthError = 0.2,
+            altitudeError = -0.4,
+            azimuthMessage = "Azimuth is within 1°.",
+            altitudeMessage = "Altitude is within 1°.",
+            statusMessage = "Locked on. Polaris approves.",
+            compassMessage = null,
+          ),
+        onNightMode = {},
+        onSound = {},
+        onSubmitLatitude = {},
+        onUseGps = {},
+        onRequestPermission = {},
+        onOpenLocationSettings = {},
+      )
+    }
   }
 }
 
